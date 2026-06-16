@@ -5,6 +5,7 @@ from fastapi import UploadFile, File
 import uuid
 import shutil
 from app.services.rag_service import ingest_chunks
+import os
 
 from app.services.pdf_service import (
     extract_text,
@@ -17,6 +18,9 @@ router = APIRouter()
 @router.post("/upload-pdf")
 def upload_pdf(file: UploadFile = File(...)):
 
+    # Create uploads folder if it doesn't exist
+    os.makedirs("uploads", exist_ok=True)
+
     file_path = f"uploads/{uuid.uuid4()}.pdf"
 
     with open(file_path, "wb") as buffer:
@@ -25,13 +29,14 @@ def upload_pdf(file: UploadFile = File(...)):
     text = extract_text(file_path)
 
     chunks = create_chunks(text)
+
     stored_chunks = ingest_chunks(
-    chunks,
-    file.filename
-)
+        chunks,
+        file.filename
+    )
 
     return {
-    "characters": len(text),
-    "chunks": len(chunks),
-    "stored_chunks": stored_chunks
-}
+        "characters": len(text),
+        "chunks": len(chunks),
+        "stored_chunks": stored_chunks
+    }
